@@ -99,6 +99,13 @@ export class BracketRangesProvider extends BetterFoldingRangeProvider {
       [end, collapsedText] = this.appendPostFoldingRangeText(bracketsRange, collapsedText, document);
     }
 
+    const endLineContent = document.lineAt(bracketsRange.end.line).text;
+    const afterClosing = endLineContent.slice(bracketsRange.end.character);
+
+    if (afterClosing.trim().length > 0) {
+      end = Math.max(start, end - 1);
+    }
+
     return { start, end, startColumn, collapsedText };
   }
 
@@ -279,6 +286,15 @@ export class BracketRangesProvider extends BetterFoldingRangeProvider {
 
     const line = bracketsRange.end.line;
     const lineContent = document.lineAt(line).text;
+
+    const afterClosing = lineContent.slice(bracketsRange.end.character);
+    if (afterClosing.trim().length > 0) {
+      return [end, collapsedText.slice(0, -1)];
+    }
+
+    if (!chainFoldingRanges) {
+      collapsedText = initialCollapsedText.slice(0, -1);
+    }
 
     for (let column = bracketsRange.end.character; column < lineContent.length; column++) {
       const foldingRange = this.positionToFoldingRange.get([line, column]);
