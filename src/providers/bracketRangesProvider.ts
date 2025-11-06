@@ -16,6 +16,7 @@ export class BracketRangesProvider extends BetterFoldingRangeProvider {
   private positionToBracketRange: ExtendedMap<PositionPair, BracketsRange | undefined>;
   private positionToFoldingRange: ExtendedMap<PositionPair, BetterFoldingRange | undefined>;
   private positionToToken: ExtendedMap<PositionPair, Token | undefined>;
+  private linesWithBrackets: Set<number> = new Set();
 
   constructor() {
     super();
@@ -23,6 +24,7 @@ export class BracketRangesProvider extends BetterFoldingRangeProvider {
     this.positionToBracketRange = new ExtendedMap(() => undefined);
     this.positionToFoldingRange = new ExtendedMap(() => undefined);
     this.positionToToken = new ExtendedMap(() => undefined);
+    this.linesWithBrackets = new Set();
 
     this.updateAllDocuments();
   }
@@ -49,6 +51,7 @@ export class BracketRangesProvider extends BetterFoldingRangeProvider {
     this.positionToBracketRange.clear();
     this.positionToFoldingRange.clear();
     this.positionToToken.clear();
+    this.linesWithBrackets.clear();
 
     this.populatePositionToBracketRangeMap(bracketsRanges);
     this.populatePositionToTokenMap(tokens);
@@ -69,6 +72,7 @@ export class BracketRangesProvider extends BetterFoldingRangeProvider {
       const line = bracketsRange.start.line;
       const column = bracketsRange.start.character;
       this.positionToBracketRange.set([line, column], bracketsRange);
+      this.linesWithBrackets.add(line);
     }
   }
 
@@ -97,6 +101,10 @@ export class BracketRangesProvider extends BetterFoldingRangeProvider {
 
     if (showFoldedBrackets) {
       [end, collapsedText] = this.appendPostFoldingRangeText(bracketsRange, collapsedText, document);
+    }
+
+    if (this.linesWithBrackets.has(bracketsRange.end.line)) {
+      end = Math.max(start, end - 1);
     }
 
     return { start, end, startColumn, collapsedText };
@@ -247,6 +255,10 @@ export class BracketRangesProvider extends BetterFoldingRangeProvider {
 
     const line = bracketsRange.end.line;
     const lineContent = document.lineAt(line).text;
+
+    if (this.linesWithBrackets.has(bracketsRange.end.line)) {
+      return [end, collapsedText.slice(0, -1)];
+    }
 
     for (let column = bracketsRange.end.character; column < lineContent.length; column++) {
       const foldingRange = this.positionToFoldingRange.get([line, column]);
