@@ -47,11 +47,22 @@
           "default": true,
           "markdownDescription": "Include closing tags like `</div>` and `</p>` in the folding range."
         },
-        "betterFoldingPlus.showFoldedBodyLinesCount": {
+        "betterFoldingPlus.collapsedBodyContent": {
           "order": 2,
-          "type": "boolean",
-          "default": true,
-          "markdownDescription": "Shows the number of lines folded, excluding the closing bracket line. \n\nExample: `function example() { ⋯ 3 lines ⋯ `"
+          "type": "string",
+          "default": "content",
+          "enum": [
+            "count",
+            "content",
+            "none"
+          ],
+          "markdownDescription": "Determines what content replaces the collapsed body text. \n\n- `count`: Shows the number of folded lines (e.g., `⋯ 3 lines ⋯`).\n- `content`: Shows the content of the first line of the body (e.g., ` return value' `).\n- `none`: Uses the default ellipsis (`…`)."
+        },
+        "betterFoldingPlus.collapsedMaxBodyLength": {
+          "order": 2,
+          "type": "integer",
+          "default": 30,
+          "markdownDescription": "The maximum number of characters to show in the collapsed body text. Only applies if `#betterFoldingPlus.collapsedBodyContent#` is `content`. \n"
         },
         "betterFoldingPlus.showFoldedBrackets": {
           "order": 3,

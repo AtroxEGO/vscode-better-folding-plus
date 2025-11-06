@@ -33,6 +33,15 @@ This is the first release of the extension, so it is not fully battle tested yet
 </p>
 
 
+### Showing Folded Content
+
+<p align="center">
+<img
+  src="https://github.com/AtroxEGO/vscode-better-folding-plus/tree/main/demo-media/contentBody.png"
+  alt="Better Folding Extension Showing Folded Content Feature Preview"
+/>
+</p>
+
 ### Showing Folded Lines Count
 
 <p align="center">

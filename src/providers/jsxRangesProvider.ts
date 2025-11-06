@@ -84,8 +84,14 @@ export default class JsxRangesProvider extends BetterFoldingRangeProvider {
     }
 
     let collapsedText = "…";
-    if (config.showFoldedBodyLinesCount()) {
-      collapsedText = this.getFoldedLinesCountCollapsedText(jsxElement);
+
+    switch (config.collapsedBodyContent()) {
+      case "count":
+        collapsedText = this.getFoldedLinesCountCollapsedText(jsxElement);
+        break;
+      case "content":
+        collapsedText = this.getFoldedContentPreview(jsxElement, document);
+        break;
     }
 
     const hasAttributes = jsxElement.openingElement.attributes.length > 0;
@@ -101,5 +107,24 @@ export default class JsxRangesProvider extends BetterFoldingRangeProvider {
   private getFoldedLinesCountCollapsedText(jsxElement: JSXElement): string {
     const linesCount = jsxElement.loc.end.line - jsxElement.loc.start.line - 1;
     return `… ${linesCount} lines …`;
+  }
+
+  private getFoldedContentPreview(jsxElement: JSXElement, document: TextDocument): string {
+    const startLine = jsxElement.openingElement.loc.end.line - 1;
+    const startCol = jsxElement.openingElement.loc.end.column;
+    const endLine = jsxElement.closingElement!.loc.start.line - 1;
+    const endCol = jsxElement.closingElement!.loc.start.column;
+
+    const contentRange = new Range(startLine, startCol, endLine, endCol);
+    let content = document.getText(contentRange).trim();
+
+    content = content.replace(/\s+/g, ' ');
+
+    const maxLength = config.collapsedMaxBodyLength();
+    if (content.length > maxLength) {
+      content = content.substring(0, maxLength) + '…';
+    }
+
+    return content ? `… ${content} …` : '…';
   }
 }

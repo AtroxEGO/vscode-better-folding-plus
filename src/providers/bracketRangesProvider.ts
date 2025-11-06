@@ -113,14 +113,18 @@ export class BracketRangesProvider extends BetterFoldingRangeProvider {
   private getCollapsedText(bracketsRange: BracketsRange, document: TextDocument, shallow = false): string {
     let collapsedText = "…";
 
-    const showFoldedBodyLinesCount = config.showFoldedBodyLinesCount();
-    if (showFoldedBodyLinesCount) {
-      collapsedText = this.getFoldedLinesCountCollapsedText(bracketsRange);
+    switch (config.collapsedBodyContent()) {
+      case "count":
+        collapsedText = this.getFoldedLinesCountCollapsedText(bracketsRange);
+        break;
+      case "content":
+        collapsedText = this.getFoldedContentPreview(bracketsRange, document);
+        break;
     }
 
     const showFunctionParameters = config.showFunctionParameters();
     if (showFunctionParameters && bracketsRange.startBracket.token.content === "(") {
-      collapsedText = this.getFunctionParamsCollapsedText(bracketsRange, document);
+      collapsedText = this.getFunctionParamsCollapsedText(bracketsRange, document, collapsedText);
     }
 
     const showObjectPreviews = config.showObjectPreviews();
@@ -136,7 +140,11 @@ export class BracketRangesProvider extends BetterFoldingRangeProvider {
     return collapsedText;
   }
 
-  private getFunctionParamsCollapsedText(bracketsRange: BracketsRange, document: TextDocument): string {
+  private getFunctionParamsCollapsedText(
+    bracketsRange: BracketsRange,
+    document: TextDocument,
+    collapsedText: string,
+  ): string {
     const paramTokens: string[] = [];
     let line = bracketsRange.start.line;
     let column = bracketsRange.start.character + 1;
@@ -160,7 +168,7 @@ export class BracketRangesProvider extends BetterFoldingRangeProvider {
       column++;
     }
 
-    return paramTokens.length ? paramTokens.join(", ") : "…";
+    return paramTokens.length ? paramTokens.join(", ") : collapsedText;
   }
 
   private isObjectLiteral(bracketsRange: BracketsRange): boolean {
@@ -233,6 +241,51 @@ export class BracketRangesProvider extends BetterFoldingRangeProvider {
     linesCount = Math.max(linesCount, 0); //For empty ranges, the start and end lines are the same.
     const line = linesCount === 1 ? "line" : "lines";
     return ` ⋯ ${linesCount} ${line} ⋯ `;
+  }
+
+  private getFoldedContentPreview(bracketsRange: BracketsRange, document: TextDocument): string {
+    let content = document.getText(bracketsRange);
+
+    content = content.slice(
+      bracketsRange.startBracket.token.content.length,
+      content.length - bracketsRange.endBracket.token.content.length
+    ).trim();
+
+    if (!content) return ' ';
+
+    const contentLines: string[] = [];
+    const delimiterCounts = { ',': 0, ';': 0 };
+
+    for (let line of content.split('\n')) {
+      line = line.trim();
+
+      if (!line) continue;
+
+      switch (line[line.length - 1]) {
+        case ',':
+          delimiterCounts[',']++;
+          line = line.slice(0, -1);
+          break;
+        case ';':
+          delimiterCounts[';']++;
+          line = line.slice(0, -1);
+          break;
+      }
+
+      if (line) contentLines.push(line);
+    }
+
+    if (contentLines.length === 0) return ' ';
+
+    const mostCommonDelimiter =
+      delimiterCounts[','] > delimiterCounts[';'] ? ', ' : '; ';
+
+    const preview = contentLines.join(mostCommonDelimiter);
+    const maxLength = config.collapsedMaxBodyLength();
+
+    if (preview.length >= maxLength) return ` ⋯ ${contentLines.length} lines ⋯ `;
+
+    return ` ${preview} `;
   }
 
   private appendPostFoldingRangeText(

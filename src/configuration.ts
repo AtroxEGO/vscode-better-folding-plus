@@ -1,6 +1,17 @@
 import { workspace } from "vscode";
 import { CONFIG_ID } from "./constants";
 
+export type CollapsedBodyMode = "count" | "content" | "none";
+
+export function collapsedBodyContent(): CollapsedBodyMode {
+  const mode = workspace.getConfiguration(CONFIG_ID).get<CollapsedBodyMode>("collapsedBodyContent");
+  return mode ?? "content";
+}
+
+export function collapsedMaxBodyLength() {
+  return workspace.getConfiguration(CONFIG_ID).get<number>("collapsedMaxBodyLength") ?? 30;
+}
+
 export function foldClosingBrackets() {
   return workspace.getConfiguration(CONFIG_ID).get<boolean>("foldClosingBrackets") ?? false;
 }
@@ -9,9 +20,6 @@ export function foldClosingTags() {
   return workspace.getConfiguration(CONFIG_ID).get<boolean>("foldClosingTags") ?? false;
 }
 
-export function showFoldedBodyLinesCount() {
-  return workspace.getConfiguration(CONFIG_ID).get<boolean>("showFoldedBodyLinesCount") ?? false;
-}
 
 export function showFoldedBrackets() {
   return workspace.getConfiguration(CONFIG_ID).get<boolean>("showFoldedBrackets") && foldClosingBrackets();
